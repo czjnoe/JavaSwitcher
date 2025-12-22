@@ -21,8 +21,10 @@ namespace JavaSwitcher.Helper
                 {
                 Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.User),
                 Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.Machine),
-                @"C:\\Program Files\\Java",
-                @"C:\\Program Files (x86)\\Java"
+                @"C:\Program Files\Java",
+                @"C:\Program Files (x86)\Java",
+                @"C:\Program Files\Microsoft\jdk",
+                @"C:\Program Files (x86)\Microsoft\jdk"
             };
                 foreach (var baseDir in possibleDirs.Where(d => !string.IsNullOrWhiteSpace(d)))
                 {
@@ -57,11 +59,14 @@ namespace JavaSwitcher.Helper
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return File.Exists(Path.Combine(jdkPath, "bin", "java.exe"));
+                return File.Exists(Path.Combine(jdkPath, "bin", "java.exe")) ||
+                       File.Exists(Path.Combine(jdkPath, "bin", "javaw.exe")) ||
+                       File.Exists(Path.Combine(jdkPath, "bin", "javac.exe"));
             }
             else
             {
-                return File.Exists(Path.Combine(jdkPath, "bin", "java"));
+                return File.Exists(Path.Combine(jdkPath, "bin", "java")) ||
+                       File.Exists(Path.Combine(jdkPath, "bin", "javac"));
             }
         }
 
@@ -69,14 +74,15 @@ namespace JavaSwitcher.Helper
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.User);
+                return Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.User) ??
+                       Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.Machine);
             }
             else
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "bash",
-                    Arguments = "-c \"update-alternatives --query java | grep ^Value: | cut -d' ' -f2\"",
+                    Arguments = "-c \"readlink -f $(which java) | xargs dirname | xargs dirname\"",
                     RedirectStandardOutput = true,
                     UseShellExecute = false
                 };
@@ -84,8 +90,7 @@ namespace JavaSwitcher.Helper
                 string output = process.StandardOutput.ReadToEnd().Trim();
                 process.WaitForExit();
                 if (string.IsNullOrWhiteSpace(output)) return null;
-                var dir = Path.GetDirectoryName(Path.GetDirectoryName(output));
-                return dir;
+                return output;
             }
         }
 
