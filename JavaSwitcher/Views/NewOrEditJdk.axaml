@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:vm="using:JavaSwitcher.ViewModels"
+		mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="200" Width="500" Height="200"
+		x:Class="JavaSwitcher.Views.NewOrEditJdk"
+		x:DataType="vm:NewOrEditJdkViewModel"
+		Title="Edit">
+
+	<Design.DataContext>
+		<vm:NewOrEditJdkViewModel/>
+	</Design.DataContext>
+
+	<DockPanel LastChildFill="True">
+		<StackPanel
+		HorizontalAlignment="Center"
+		DockPanel.Dock="Bottom"
+		Orientation="Horizontal">
+			<StackPanel.Resources>
+			
+			</StackPanel.Resources>
+			<Button Click="OkButton_Click" Content="OK" />
+			<Button Click="CancelButton_Click" Content="Cancle" />
+		</StackPanel>
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition />
+				<RowDefinition />
+				<RowDefinition />
+			</Grid.RowDefinitions>
+			<Label Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+				Name
+			</Label>
+			<TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Height="25" Text="{Binding Name}" />
+			<Label Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+				JAVA__HOME
+			</Label>
+			<TextBox Grid.Row="1" Grid.Column="1" Height="25" Text="{Binding JavaPath}" />
+			<Button Grid.Row="1" Grid.Column="2" Name="btnBrowse" HorizontalAlignment="Left" Click="btnBrowse_Click" Content="Browse..." />
+		</Grid>
+	</DockPanel>
+</Window>

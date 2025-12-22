@@ -1,0 +1,90 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:vm="using:JavaSwitcher.ViewModels"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+		xmlns:views="using:JavaSwitcher.Views"
+		x:Class="JavaSwitcher.Views.MainWindow"
+		x:DataType="vm:MainWindowViewModel"
+		Icon="/Assets/avalonia-logo.ico"
+		Title="JavaSwitcher">
+
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<vm:MainWindowViewModel/>
+	</Design.DataContext>
+
+	<DockPanel>
+		<Menu DockPanel.Dock="Top">
+			<MenuItem Header="operate">
+				<MenuItem Command="{Binding AddJdkCommand}"  Header="Add JDK" />
+				<MenuItem Command="{Binding OpenSetEnvironmentVariablesCommand}"  Header="Environment Variables" />
+			</MenuItem>
+		</Menu>
+
+		<Grid>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="200"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<Label Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+				Name:
+			</Label>
+			<TextBox IsReadOnly="True" Grid.Row="0" Grid.Column="1" Height="25" Text="{Binding CurrentJdkVersion}" />
+
+			<DataGrid Grid.Row="1" Grid.ColumnSpan="3" Margin="20" ItemsSource="{Binding Jdks}"
+					  GridLinesVisibility="All"
+					  BorderThickness="1" BorderBrush="Gray"  SelectedItem="{Binding SelectedJdk}">
+				<DataGrid.ContextMenu>
+					<ContextMenu>
+						<MenuItem Header="Add"
+								  Command="{Binding AddJdkCommand}"
+								  CommandParameter="{Binding SelectedJdk}"/>
+					</ContextMenu>
+				</DataGrid.ContextMenu>
+
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Name" Width="*"
+										Binding="{Binding Name}" />
+					<DataGridTextColumn Header="Java Home" Width="2*"
+										Binding="{Binding JavaPath}" />
+				</DataGrid.Columns>
+
+				<DataGrid.Styles>
+					<Style Selector="DataGridRow">
+						<Setter Property="ContextMenu">
+							<Template>
+								<ContextMenu>
+									<MenuItem Header="Set Java Home"
+											  Command="{Binding $parent[DataGrid].((vm:MainWindowViewModel)DataContext).SetCurrentJdkCommand}"
+											  CommandParameter="{Binding}"/>
+									<MenuItem Header="Edit"
+											  Command="{Binding $parent[DataGrid].((vm:MainWindowViewModel)DataContext).EditJdkCommand}"
+											  CommandParameter="{Binding}"/>
+									<Separator/>
+									<MenuItem Header="Delete"
+											  Command="{Binding $parent[DataGrid].((vm:MainWindowViewModel)DataContext).DeleteJdkCommand}"
+											  CommandParameter="{Binding}"/>
+								</ContextMenu>
+							</Template>
+						</Setter>
+					</Style>
+				</DataGrid.Styles>
+			</DataGrid>
+
+			<!-- ÈÕÖ¾ÊÓÍ¼ -->
+			<views:LogView Grid.Row="2" Grid.ColumnSpan="3" DataContext="{Binding LogViewModel}"/>
+		</Grid>
+
+	</DockPanel>
+
+</Window>
