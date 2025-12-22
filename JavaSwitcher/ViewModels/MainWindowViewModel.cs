@@ -34,18 +34,17 @@ namespace JavaSwitcher.ViewModels
 
         public ObservableCollection<Jdk> Jdks { get; } = new ObservableCollection<Jdk>();
 
+        public ICommand SaveCommand { get; }
         public ICommand AddJdkCommand { get; }
-
         public ICommand OpenSetEnvironmentVariablesCommand { get; }
-
         public LogViewModel LogViewModel { get; }
-
         public ICommand SetCurrentJdkCommand { get; }
         public ICommand EditJdkCommand { get; }
         public ICommand DeleteJdkCommand { get; }
 
         public MainWindowViewModel()
         {
+            SaveCommand = ReactiveCommand.Create(SaveClick);
             AddJdkCommand = ReactiveCommand.Create(AddJdkClick);
             OpenSetEnvironmentVariablesCommand = ReactiveCommand.Create(OpenSetEnvironmentVariablesClick);
             LogViewModel = new LogViewModel();
@@ -58,7 +57,12 @@ namespace JavaSwitcher.ViewModels
             else
                 Jdks = new ObservableCollection<Jdk>(JdkHelper.FindJdks());
 
-            CurrentJdkVersion = ProcessHelper.GetJdkVersionFromRegistry();
+            CurrentJdkVersion = JdkHelper.GetCurrentJdk();
+        }
+
+        public async Task SaveClick()
+        {
+            Save();
         }
 
         public async Task AddJdkClick()
@@ -71,10 +75,7 @@ namespace JavaSwitcher.ViewModels
             {
                 Jdks.Add(result);
                 LogViewModel.AddLog($"添加 JDK: {result.Name} -> {result.JavaPath}");
-
-                // 保存到配置文件
-                AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
-                AppConfigHelper.SaveSetting();
+                Save();
             }
             else
             {
@@ -101,8 +102,8 @@ namespace JavaSwitcher.ViewModels
             {
 
                 LogViewModel.AddLog($"设置当前 JDK: {jdk.Name}");
-                JdkHelper.SetJdk(jdk.JavaPath);
-                CurrentJdkVersion = ProcessHelper.GetJdkVersionFromRegistry();
+                JdkHelper.SetAllJdk(jdk.JavaPath);
+                CurrentJdkVersion = JdkHelper.GetCurrentJdk();
             }
         }
 
@@ -125,8 +126,7 @@ namespace JavaSwitcher.ViewModels
 
                     queryJdk.Name = result.Name;
                     queryJdk.JavaPath = result.JavaPath;
-                    AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
-                    AppConfigHelper.SaveSetting();
+                    Save();
                 }
             }
         }
@@ -137,11 +137,18 @@ namespace JavaSwitcher.ViewModels
             {
                 LogViewModel.AddLog($"删除 JDK: {jdk.Name}");
                 Jdks.Remove(jdk);
-                AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
-                AppConfigHelper.SaveSetting();
+                Save();
             }
         }
 
+        /// <summary>
+        /// 保存到配置文件
+        /// </summary>
+        private void Save()
+        {
+            AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
+            AppConfigHelper.SaveSetting();
+        }
 
         protected virtual void Dispose(bool disposing)
         {
