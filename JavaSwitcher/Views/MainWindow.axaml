@@ -27,6 +27,7 @@
 
 		<Grid>
 			<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
 				<RowDefinition Height="Auto"/>
 				<RowDefinition Height="*"/>
 				<RowDefinition Height="200"/>
@@ -42,7 +43,12 @@
 			</Label>
 			<TextBox IsReadOnly="True" Grid.Row="0" Grid.Column="1" Height="25" Text="{Binding CurrentJdkVersion}" />
 
-			<DataGrid Grid.Row="1" Grid.ColumnSpan="3" Margin="20" ItemsSource="{Binding Jdks}"
+			<Label Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+				Current Java Version:
+			</Label>
+			<TextBox IsReadOnly="True" Grid.Row="1" Grid.Column="1" Height="25" Text="{Binding CurrentJavaHome}" />
+
+			<DataGrid Grid.Row="2" Grid.ColumnSpan="3" Margin="20" ItemsSource="{Binding Jdks}"
 					  GridLinesVisibility="All"
 					  BorderThickness="1" BorderBrush="Gray"  SelectedItem="{Binding SelectedJdk}">
 				<DataGrid.ContextMenu>
@@ -83,9 +89,7 @@
 			</DataGrid>
 
 			<!-- ÈÕÖ¾ÊÓÍ¼ -->
-			<views:LogView Grid.Row="2" Grid.ColumnSpan="3" DataContext="{Binding LogViewModel}"/>
+			<views:LogView Grid.Row="3" Grid.ColumnSpan="3" DataContext="{Binding LogViewModel}"/>
 		</Grid>
-
 	</DockPanel>
-
 </Window>

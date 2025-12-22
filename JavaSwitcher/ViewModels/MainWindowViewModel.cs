@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using JavaSwitcher.Helper;
 using JavaSwitcher.Models;
@@ -32,6 +33,14 @@ namespace JavaSwitcher.ViewModels
             set => this.RaiseAndSetIfChanged(ref _currentJdkVersion, value);
         }
 
+        private string _currentJavaHome = "";
+
+        public string CurrentJavaHome
+        {
+            get => _currentJavaHome;
+            set => this.RaiseAndSetIfChanged(ref _currentJavaHome, value);
+        }
+
         public ObservableCollection<Jdk> Jdks { get; } = new ObservableCollection<Jdk>();
 
         public ICommand SaveCommand { get; }
@@ -58,6 +67,7 @@ namespace JavaSwitcher.ViewModels
                 Jdks = new ObservableCollection<Jdk>(JdkHelper.FindJdks());
 
             CurrentJdkVersion = JdkHelper.GetCurrentJdk();
+            CurrentJavaHome = JdkHelper.GetCurrentJavaVersion();
         }
 
         public async Task SaveClick()
@@ -68,7 +78,6 @@ namespace JavaSwitcher.ViewModels
         public async Task AddJdkClick()
         {
             var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-
             NewOrEditJdk dialog = new NewOrEditJdk();
             var result = await dialog.ShowDialog<Jdk>(mainWindow);
             if (result != null)
@@ -87,8 +96,7 @@ namespace JavaSwitcher.ViewModels
         {
             try
             {
-                // 直接打开“环境变量”设置界面
-                Process.Start("rundll32.exe", "sysdm.cpl,EditEnvironmentVariables");
+                Process.Start("rundll32.exe", "sysdm.cpl,EditEnvironmentVariables");// 直接打开“环境变量”设置界面
             }
             catch (Exception ex)
             {
@@ -103,7 +111,9 @@ namespace JavaSwitcher.ViewModels
 
                 LogViewModel.AddLog($"设置当前 JDK: {jdk.Name}");
                 JdkHelper.SetAllJdk(jdk.JavaPath);
+                JdkHelper.RefreshEnvironmentVariables();
                 CurrentJdkVersion = JdkHelper.GetCurrentJdk();
+                CurrentJavaHome = JdkHelper.GetCurrentJavaVersion();
             }
         }
 
@@ -118,7 +128,6 @@ namespace JavaSwitcher.ViewModels
 
                 if (result != null)
                 {
-                    // 更新现有的 JDK
                     jdk.Name = result.Name;
                     jdk.JavaPath = result.JavaPath;
 
@@ -127,6 +136,10 @@ namespace JavaSwitcher.ViewModels
                     queryJdk.Name = result.Name;
                     queryJdk.JavaPath = result.JavaPath;
                     Save();
+                }
+                else
+                {
+                    LogViewModel.AddLog("取消编辑 JDK");
                 }
             }
         }
@@ -148,6 +161,7 @@ namespace JavaSwitcher.ViewModels
         {
             AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
             AppConfigHelper.SaveSetting();
+            LogViewModel.AddLog("保存成功");
         }
 
         protected virtual void Dispose(bool disposing)

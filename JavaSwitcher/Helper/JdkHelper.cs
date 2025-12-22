@@ -101,6 +101,100 @@ namespace JavaSwitcher.Helper
             }
         }
 
+        /// <summary>
+        /// 获取当前正在使用的Java版本
+        /// </summary>
+        /// <returns>Java版本信息字符串</returns>
+        public static string? GetCurrentJavaVersion()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Windows系统通过JAVA_HOME环境变量找到java.exe执行版本查询命令
+                var javaHome = Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.Machine) ??
+                               Environment.GetEnvironmentVariable("JAVA_HOME", EnvironmentVariableTarget.User);
+
+                if (!string.IsNullOrEmpty(javaHome))
+                {
+                    var javaExePath = Path.Combine(javaHome, "bin", "java.exe");
+                    if (File.Exists(javaExePath))
+                    {
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = javaExePath,
+                            Arguments = "-version",
+                            RedirectStandardOutput = false, // Java的版本信息输出到标准错误流
+                            RedirectStandardError = true,
+                            UseShellExecute = false
+                        };
+
+                        using var process = Process.Start(psi);
+                        string output = process.StandardError.ReadToEnd().Trim();
+                        process.WaitForExit();
+                        return ExtractVersionFromOutput(output);
+                    }
+                }
+
+                // 如果无法通过JAVA_HOME找到，尝试直接使用PATH中的java命令
+                var psiFallback = new ProcessStartInfo
+                {
+                    FileName = "cmd",
+                    Arguments = "/c java -version",
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                };
+
+                using var processFallback = Process.Start(psiFallback);
+                string outputFallback = processFallback.StandardError.ReadToEnd().Trim();
+                processFallback.WaitForExit();
+                return ExtractVersionFromOutput(outputFallback);
+            }
+            else
+            {
+                // Linux/Mac系统直接使用java命令
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "bash",
+                    Arguments = "-c \"java -version 2>&1\"",
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
+                    UseShellExecute = false,
+                };
+
+                using var process = Process.Start(psi);
+                string output = process.StandardError.ReadToEnd().Trim();
+                process.WaitForExit();
+                return ExtractVersionFromOutput(output);
+            }
+        }
+
+        /// <summary>
+        /// 从Java版本输出中提取版本号
+        /// </summary>
+        /// <param name="output">Java -version命令的输出</param>
+        /// <returns>提取的版本号字符串</returns>
+        private static string? ExtractVersionFromOutput(string output)
+        {
+            if (string.IsNullOrWhiteSpace(output))
+                return null;
+
+            // 示例输出："openjdk version \"17.0.2\" 2022-01-18" 或 "java version \"1.8.0_321\""
+            var lines = output.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.Contains("version"))
+                {
+                    // 使用正则表达式匹配版本号，例如 "17.0.2" 或 "1.8.0_321"
+                    var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+)""");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+            return null;
+        }
+
         public static string SetJdk(string jdkPath, EnvironmentVariableTarget target = EnvironmentVariableTarget.Machine)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -173,6 +267,17 @@ namespace JavaSwitcher.Helper
         {
             SetJdk(jdkPath, EnvironmentVariableTarget.User);
             return SetJdk(jdkPath, EnvironmentVariableTarget.Machine);
+        }
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool SendNotifyMessage(IntPtr hWnd, uint Msg,
+UIntPtr wParam, string lParam);
+        const int HWND_BROADCAST = 0xffff;
+        const uint WM_SETTINGCHANGE = 0x001a;
+
+        public static void RefreshEnvironmentVariables()
+        {
+            SendNotifyMessage((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, (UIntPtr)0, "Environment");
         }
 
         private static Version ParseVersion(string versionString)
