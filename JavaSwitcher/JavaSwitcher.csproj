@@ -23,24 +23,28 @@
 			<IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
 			<PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="PropertyChanged.SourceGenerator" Version="1.1.2">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EditorConfigFiles Remove="C:\Program Files\PEER Group\PTO 8.6 SP2\Code\JavaSwitcher\JavaSwitcher\.editorconfig" />
+		<EditorConfigFiles Remove="C:\Program Files\PEER Group\PTO 8.6 SP2\Code\JavaSwitcher\JavaSwitcher\.editorconfig" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="appsettings.json" />
+		<None Remove="appsettings.json" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="appsettings.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="C:\Program Files\PEER Group\PTO 8.6 SP2\Code\JavaSwitcher\JavaSwitcher\.editorconfig" />
+		<None Include="C:\Program Files\PEER Group\PTO 8.6 SP2\Code\JavaSwitcher\JavaSwitcher\.editorconfig" />
 	</ItemGroup>
 </Project>

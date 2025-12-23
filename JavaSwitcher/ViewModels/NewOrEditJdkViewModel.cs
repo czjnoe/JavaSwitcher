@@ -2,30 +2,23 @@
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using PropertyChanged.SourceGenerator;
 
 namespace JavaSwitcher.ViewModels
 {
-    public class NewOrEditJdkViewModel : ViewModelBase
+    public partial class NewOrEditJdkViewModel : ViewModelBase
     {
-        private string _name = "";
-        private string _javaPath = "";
+        [Notify]
+        private string _name;
 
-        public string Name
-        {
-            get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
-        }
-
-        public string JavaPath
-        {
-            get => _javaPath;
-            set => this.RaiseAndSetIfChanged(ref _javaPath, value);
-        }
+        [Notify]
+        private string _javaPath;
 
         public NewOrEditJdkViewModel()
         {
