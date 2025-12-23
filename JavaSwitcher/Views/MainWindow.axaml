@@ -27,10 +27,11 @@
 
 		<Grid>
 			<Grid.RowDefinitions>
-					<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
 				<RowDefinition Height="Auto"/>
 				<RowDefinition Height="*"/>
 				<RowDefinition Height="200"/>
+				<RowDefinition Height="Auto"/>
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="Auto" />
@@ -90,6 +91,14 @@
 
 			<!-- ÈÕÖ¾ÊÓÍ¼ -->
 			<views:LogView Grid.Row="3" Grid.ColumnSpan="3" DataContext="{Binding LogViewModel}"/>
+
+			<StackPanel Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Center">
+				<Label VerticalContentAlignment="Center" VerticalAlignment="Center">Author:</Label>
+				<Label VerticalContentAlignment="Center" VerticalAlignment="Center">CZJ</Label>
+				<Label VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="20 0 0 0">Source:</Label>
+				<HyperlinkButton Content="https://github.com/czjnoe/JavaSwitcher.git"
+                 NavigateUri="https://github.com/czjnoe/JavaSwitcher.git" Click="OnHyperlinkButtonClicked" />
+			</StackPanel>
 		</Grid>
 	</DockPanel>
 </Window>
