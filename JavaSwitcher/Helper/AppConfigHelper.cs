@@ -9,13 +9,11 @@ using System.Threading.Tasks;
 
 namespace JavaSwitcher.Helper
 {
-    public static class AppConfigHelper
+    public static class AppSettingsHelper
     {
-        private static readonly string _appSettingsPath = Path.Combine(
+        private static readonly string _appSettingsPath = System.IO.Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
             "appsettings.json");
-
-        public static Appsetting Appsetting { get; private set; }
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -23,77 +21,45 @@ namespace JavaSwitcher.Helper
             PropertyNameCaseInsensitive = true
         };
 
-        static AppConfigHelper()
-        {
-            LoadConfiguration();
-        }
-
         /// <summary>
-        /// 加载配置文件
+        /// 获取完整配置对象
         /// </summary>
-        private static void LoadConfiguration()
+        public static T GetConfig<T>() where T : class
         {
+            if (!File.Exists(_appSettingsPath))
+                return default;
+
             try
             {
-                if (!File.Exists(_appSettingsPath))
-                {
-                    Appsetting = default;
-                    return;
-                }
-
                 var jsonContent = File.ReadAllText(_appSettingsPath);
-                Appsetting = JsonSerializer.Deserialize<Appsetting>(jsonContent, _jsonOptions);
+                return JsonSerializer.Deserialize<T>(jsonContent, _jsonOptions);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new InvalidOperationException($"加载配置失败: {ex.Message}", ex);
             }
         }
 
         /// <summary>
         /// 根据键路径获取配置值
         /// </summary>
-        /// <typeparam name="T">返回类型</typeparam>
-        /// <param name="keyPath">键路径，使用冒号分隔，例如 "Section:SubSection:Key"</param>
-        /// <returns>配置值</returns>
-        public static T GetSetting<T>(string keyPath)
+        public static T GetValue<T>(string keyPath)
         {
             if (string.IsNullOrWhiteSpace(keyPath))
-            {
                 throw new ArgumentException("键路径不能为空", nameof(keyPath));
-            }
+
+            if (!File.Exists(_appSettingsPath))
+                return default;
 
             try
             {
-                if (!File.Exists(_appSettingsPath))
-                {
-                    return default;
-                }
-
                 var jsonContent = File.ReadAllText(_appSettingsPath);
                 var jsonNode = JsonNode.Parse(jsonContent);
+                var targetNode = NavigateToNode(jsonNode, keyPath);
 
-                var pathSegments = keyPath.Split(':');
-                var currentNode = jsonNode;
-
-                // 遍历路径查找目标节点
-                foreach (var segment in pathSegments)
-                {
-                    if (currentNode == null)
-                    {
-                        return default;
-                    }
-
-                    currentNode = currentNode[segment];
-                }
-
-                if (currentNode == null)
-                {
-                    return default;
-                }
-
-                // 反序列化为目标类型
-                return JsonSerializer.Deserialize<T>(currentNode.ToJsonString(), _jsonOptions);
+                return targetNode == null
+                    ? default
+                    : JsonSerializer.Deserialize<T>(targetNode.ToJsonString(), _jsonOptions);
             }
             catch (Exception ex)
             {
@@ -104,49 +70,30 @@ namespace JavaSwitcher.Helper
         /// <summary>
         /// 更新指定键路径的配置值
         /// </summary>
-        /// <typeparam name="T">值类型</typeparam>
-        /// <param name="keyPath">键路径，使用冒号分隔，例如 "Section:SubSection:Key"</param>
-        /// <param name="value">新值</param>
-        public static void UpdateSetting<T>(string keyPath, T value)
+        public static void UpdateValue<T>(string keyPath, T value)
         {
             if (string.IsNullOrWhiteSpace(keyPath))
-            {
                 throw new ArgumentException("键路径不能为空", nameof(keyPath));
-            }
 
             try
             {
-                // 读取整个 JSON 文件
                 var jsonContent = File.ReadAllText(_appSettingsPath);
                 var jsonNode = JsonNode.Parse(jsonContent);
-
-                // 分割键路径
                 var pathSegments = keyPath.Split(':');
                 var currentNode = jsonNode;
 
-                // 遍历路径直到找到目标节点（跳过最后一个段）
+                // 导航到父节点，不存在则创建
                 for (int i = 0; i < pathSegments.Length - 1; i++)
                 {
-                    var segment = pathSegments[i];
-
-                    // 如果节点不存在，创建新的 JsonObject
-                    if (currentNode[segment] == null)
-                    {
-                        currentNode[segment] = new JsonObject();
-                    }
-
-                    currentNode = currentNode[segment];
+                    currentNode[pathSegments[i]] ??= new JsonObject();
+                    currentNode = currentNode[pathSegments[i]];
                 }
 
-                // 获取最后一个键名并设置值
-                var finalKey = pathSegments[pathSegments.Length - 1];
-                currentNode[finalKey] = JsonValue.Create(value);
+                // 设置最终值
+                currentNode[pathSegments[^1]] = JsonValue.Create(value);
 
-                // 保存修改后的 JSON
+                // 保存
                 File.WriteAllText(_appSettingsPath, jsonNode.ToJsonString(_jsonOptions));
-
-                // 重新加载配置
-                LoadConfiguration();
             }
             catch (Exception ex)
             {
@@ -157,17 +104,12 @@ namespace JavaSwitcher.Helper
         /// <summary>
         /// 保存整个配置对象
         /// </summary>
-        /// <typeparam name="T">配置对象类型</typeparam>
-        /// <param name="config">配置对象</param>
-        public static void SaveSetting<T>(T config)
+        public static void Save<T>(T config) where T : class
         {
             try
             {
                 var json = JsonSerializer.Serialize(config, _jsonOptions);
                 File.WriteAllText(_appSettingsPath, json);
-
-                // 重新加载配置
-                LoadConfiguration();
             }
             catch (Exception ex)
             {
@@ -175,25 +117,26 @@ namespace JavaSwitcher.Helper
             }
         }
 
-        public static void SaveSetting()
-        {
-            SaveSetting(Appsetting);
-        }
-
-        /// <summary>
-        /// 重新加载配置
-        /// </summary>
-        public static void Reload()
-        {
-            LoadConfiguration();
-        }
-
         /// <summary>
         /// 检查配置文件是否存在
         /// </summary>
-        public static bool ConfigFileExists()
+        public static bool ConfigFileExists() => File.Exists(_appSettingsPath);
+
+        /// <summary>
+        /// 导航到指定路径的节点
+        /// </summary>
+        private static JsonNode NavigateToNode(JsonNode rootNode, string keyPath)
         {
-            return File.Exists(_appSettingsPath);
+            var pathSegments = keyPath.Split(':');
+            var currentNode = rootNode;
+
+            foreach (var segment in pathSegments)
+            {
+                if (currentNode == null) return null;
+                currentNode = currentNode[segment];
+            }
+
+            return currentNode;
         }
     }
 }

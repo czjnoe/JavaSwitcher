@@ -89,7 +89,7 @@
 				</DataGrid.Styles>
 			</DataGrid>
 
-			<!-- ÈÕÖ¾ÊÓÍ¼ -->
+			<!-- æ—¥å¿— -->
 			<views:LogView Grid.Row="3" Grid.ColumnSpan="3" DataContext="{Binding LogViewModel}"/>
 
 			<StackPanel Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Center">

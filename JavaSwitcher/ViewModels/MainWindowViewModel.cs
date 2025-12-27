@@ -61,8 +61,9 @@ namespace JavaSwitcher.ViewModels
             EditJdkCommand = ReactiveCommand.CreateFromTask<Jdk>(EditJdk);
             DeleteJdkCommand = ReactiveCommand.Create<Jdk>(DeleteJdk);
 
-            if (AppConfigHelper.Appsetting.Jdks.Any())
-                Jdks = new ObservableCollection<Jdk>(AppConfigHelper.Appsetting.Jdks);
+            var config = AppSettingsHelper.GetConfig<Appsetting>();
+            if (config.Jdks.Any())
+                Jdks = new ObservableCollection<Jdk>(config.Jdks);
             else
                 Jdks = new ObservableCollection<Jdk>(JdkHelper.FindJdks());
 
@@ -121,7 +122,7 @@ namespace JavaSwitcher.ViewModels
         {
             if (jdk != null)
             {
-                var queryJdk = AppConfigHelper.Appsetting.Jdks.FirstOrDefault(w => w.Name == jdk.Name && w.JavaPath == jdk.JavaPath);
+                var queryJdk = AppSettingsHelper.GetConfig<Appsetting>().Jdks.FirstOrDefault(w => w.Name == jdk.Name && w.JavaPath == jdk.JavaPath);
                 var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
                 var dialog = new NewOrEditJdk(jdk);
                 var result = await dialog.ShowDialog<Jdk?>(mainWindow);
@@ -159,8 +160,9 @@ namespace JavaSwitcher.ViewModels
         /// </summary>
         private void Save()
         {
-            AppConfigHelper.Appsetting.Jdks = Jdks.ToList();
-            AppConfigHelper.SaveSetting();
+            var config = AppSettingsHelper.GetConfig<Appsetting>();
+            config.Jdks = Jdks.ToList();
+            AppSettingsHelper.Save(config);
             LogViewModel.AddLog("保存成功");
         }
 
